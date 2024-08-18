@@ -16,6 +16,9 @@
 
 RTC_DATA_ATTR int pressCount = 0;
 
+long lastRefresh = 0;
+long refreshInterval = 500;
+
 ScreenCoordinator screenCoordinator = ScreenCoordinator();
 
 void displayMainScreen()
@@ -72,7 +75,9 @@ void setup()
 void loop()
 {
   checkButton();
-  switch(screenCoordinator.screenType){
+  if (millis() - lastRefresh > refreshInterval)
+  {
+    switch(screenCoordinator.screenType){
     case MAIN:
       displayMainScreen();
       break;
@@ -80,4 +85,8 @@ void loop()
       screenCoordinator.showSleepScreen();
       break;
   }
+
+    lastRefresh = millis();
+  }
+  
 }
