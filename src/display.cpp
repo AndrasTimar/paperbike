@@ -13,15 +13,11 @@ void setupDisplay() {
     display.init();
 }
 
-void clearScreen(bool refreshScreen = true) {
-    display.fillScreen(GxEPD_WHITE);
-    if(refreshScreen) {
-        display.update();
-    }
-    
+void clearScreen() {
+    display.fillScreen(GxEPD_WHITE);    
 }
 
-void displayText(String text, int x = 2, int y = 40, bool refreshScreen = true)
+void displayText(String text, int x = 2, int y = 40)
 {  
     Serial.println("displayText");
     display.setRotation(1);
@@ -29,9 +25,9 @@ void displayText(String text, int x = 2, int y = 40, bool refreshScreen = true)
     display.setFont(&prazo_Regular_29pt7b);
     display.setCursor(x, y);
     display.println(text);
-    if(refreshScreen) {
-        display.update();
-    }
-    
     Serial.println("displayText done");
+}
+
+void updateScreen() {
+    display.update();
 }

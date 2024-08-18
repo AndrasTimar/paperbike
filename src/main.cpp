@@ -15,63 +15,82 @@
 #include <sleep.h>
 
 RTC_DATA_ATTR int pressCount = 0;
+float lastShownPercent = -2;
+float lastPressCount = -1;
 
-void displayMainScreen() {
-  clearScreen(false);
 
+
+void displayMainScreen()
+{
   float batteryLevel = checkBattery();
-  Serial.println("Battery Level: " + String(batteryLevel) + "%");
-  if(batteryLevel < 0) {
-    displayText("Battery Charging.", 2, 40, false);
-  } else {
-    displayText("Battery Level: " + String(batteryLevel) + "%.", 2, 40, false);
-  }
+  if (abs(batteryLevel - lastShownPercent) > 1.0 || pressCount != lastPressCount) {
+      clearScreen();
+      Serial.println("Battery Level: " + String(batteryLevel) + "%");
+      if (batteryLevel < 0){
+        displayText("Battery Charging.", 2, 40);
+      } else {
+        displayText("Battery Level: " + String(batteryLevel) + "%.", 2, 40);
+      }
 
-  displayText("Press Count: " + String(pressCount), 2, 80);
+      displayText("Press Count: " + String(pressCount), 2, 80);
+      lastShownPercent = batteryLevel;
+      lastPressCount = pressCount;
+      updateScreen();
+    }
 }
 
-void onButtonClicked() {
+void onButtonClicked()
+{
   pressCount++;
   Serial.println("Button clicked");
-  displayMainScreen();
 }
 
-void onButtonDoubleClicked() {
+void onButtonDoubleClicked()
+{
   pressCount = 0;
   Serial.println("Button double clicked");
-  displayMainScreen();
 }
 
-void onButtonLongPressed() {
+void onButtonLongPressed()
+{
   Serial.println("Button long pressed");
   Serial.println("Going to sleep...");
+  clearScreen();
+  displayText("Going to sleep...", 2, 40);
+  updateScreen();
   delay(1000);
   enterSleep();
 }
 
+void setup()
+{
+  Serial.begin(115200);
+  Serial.println();
+  Serial.println("setup");
+  pinMode(BATTERY_ADC_PIN, INPUT);
+  analogReadResolution(12);
+  // connectToWifi();
+  setupButton(onButtonClicked, onButtonDoubleClicked, onButtonLongPressed);
+  setupDisplay();
+  Serial.println("setup done");
 
-void setup() {
-    Serial.begin(115200);
-    Serial.println();
-    Serial.println("setup");
-    pinMode(BATTERY_ADC_PIN, INPUT);
-    analogReadResolution(12);
-    //connectToWifi();
-    setupButton(onButtonClicked, onButtonDoubleClicked, onButtonLongPressed);
-    setupDisplay();
-    Serial.println("setup done");
-
-    //If not woken up by button press, show battery percentage
-    if(!wokenByButtonPress()) {
-      Serial.println("Not woken up by button press");
-      displayMainScreen();
-    } else {
-      Serial.println("Woken up by button press");
-      //Manually call button handler, as event is not caught after deep sleep wakeup  - hacky
-      onButtonClicked();
-    }
+  // If not woken up by button press, show battery percentage
+  if (!wokenByButtonPress())
+  {
+    Serial.println("Not woken up by button press");
+    displayMainScreen();
+  }
+  else
+  {
+    Serial.println("Woken up by button press");
+    // Manually call button handler, as event is not caught after deep sleep wakeup  - hacky
+    onButtonClicked();
+  }
+  updateScreen();
 }
 
-void loop() {
-   checkButton();
+void loop()
+{
+  checkButton();
+  displayMainScreen();
 }
