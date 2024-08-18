@@ -11,17 +11,8 @@
 
 SleepScreen::SleepScreen(GxEPD_Class* display) {
     this->display = display;
-    this->windowPortionsMap.emplace("icon", WindowPortion(0, 0, 250, 128, false));
 };
 
-void SleepScreen::show()
-{
-    if (windowPortionsMap.empty())
-    {
-        WindowPortion windowPortion = WindowPortion(0, 0, 256, 128, false);
-        windowPortionsMap.emplace("icon", windowPortion);
-    }
-    WindowPortion iconPortion = windowPortionsMap.find("icon")->second;
-    display->drawBitmap(iconPortion.x, iconPortion.y, trashcan, iconPortion.w, iconPortion.h, GxEPD_BLACK);
-    display->update();
+void SleepScreen::show(){
+    
 };

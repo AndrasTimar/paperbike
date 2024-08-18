@@ -12,8 +12,11 @@ ScreenCoordinator::ScreenCoordinator() : io(SPI, EPD_CS, EPD_DC, EPD_RSET){
     SPI.begin(EPD_SCLK, EPD_MISO, EPD_MOSI);
     display = new GxEPD_Class(io, EPD_RSET, EPD_BUSY);
     display->init();
+    display->setTextSize(2);
     mainScreen = new MainScreen(display);
     sleepScreen = new SleepScreen(display);
+    display->fillScreen(GxEPD_WHITE);
+    display->update();
 };
 
 void ScreenCoordinator::showMainScreen(float batteryLevel, int pressCount)
