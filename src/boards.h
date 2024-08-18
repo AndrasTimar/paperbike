@@ -27,6 +27,10 @@
 
 #define BATTERY_ADC_PIN         (35)
 
+#define SCREEN_WIDTH            (250)
+#define SCREEN_HEIGHT           (120)
+#define UNUSABLE_TOP_HEIGHT     (8)
+
 #define _HAS_ADC_DETECTED_
 #define _HAS_LED_
 #define _HAS_SDCARD_

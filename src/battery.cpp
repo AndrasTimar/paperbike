@@ -5,14 +5,13 @@
 const float maxVoltage = 4.2; // maximum voltage for your battery
 const float minVoltage = 3.0; // minimum voltage for your battery
 
-//-1.0 means charging, assuming the circuit is charging when voltage is above 4.3V
 float checkBattery()
 {
     float voltage = analogRead(BATTERY_ADC_PIN) / 4096.0 * 7.46;
     uint8_t percentage = 0;
-    Serial.println("Voltage = " + String(voltage));
-    if(voltage > 4.3) {
-        return -1.0; // signal charging
+    //Serial.println("Voltage = " + String(voltage));
+    if(voltage > 4.2) {
+        return 100.0; // signal charging
     }
     if (voltage > 1)
     { // Only display if there is a valid reading
@@ -21,7 +20,7 @@ float checkBattery()
             percentage = 100;
         if (voltage <= 3.50)
             percentage = 0;
-        Serial.println("Percentage = " + String(percentage));
+        //Serial.println("Percentage = " + String(percentage));
     }
     return percentage;
 }
