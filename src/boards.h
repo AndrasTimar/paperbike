@@ -25,7 +25,7 @@
 #define LED_PIN                 (19)
 #define LED_ON                  (LOW)
 
-#define ADC_PIN                 (35)
+#define BATTERY_ADC_PIN         (35)
 
 #define _HAS_ADC_DETECTED_
 #define _HAS_LED_

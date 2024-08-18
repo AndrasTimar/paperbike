@@ -2,6 +2,6 @@
 #define DISPLAY_H
 
 void setupDisplay();
-void displayText(String text, int x, int y);
-
+void displayText(String text);
+void clearScreen(bool refreshScreen);
 #endif

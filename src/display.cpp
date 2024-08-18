@@ -13,15 +13,21 @@ void setupDisplay() {
     display.init();
 }
 
-void displayText(String text, int x, int y)
+void clearScreen(bool refreshScreen) {
+    display.fillScreen(GxEPD_WHITE);
+    if(refreshScreen) {
+        display.update();
+    }
+    
+}
+void displayText(String text)
 {  
     Serial.println("displayText");
     display.setRotation(1);
     display.setTextColor(GxEPD_BLACK);
     display.setFont(&prazo_Regular_29pt7b);
     display.setCursor(2, 80);
-    display.println("Szia Sami!");
+    display.println(text);
     display.update();
     Serial.println("displayText done");
-    delay(2000);
 }
