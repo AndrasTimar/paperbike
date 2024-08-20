@@ -23,7 +23,7 @@ public:
         int paddingTopForCenter = ((height - sleepIconSize.height) / 2);
         iconWidget = new IconWidget(WidgetConfig(0, 0, paddingStartForCenter, paddingTopForCenter, width, height), sleepIconData, sleepIconSize);
     };
-    void show()
+    void init()
     {
         display->fillScreen(GxEPD_WHITE);
         iconWidget->render(*display, false);

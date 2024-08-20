@@ -2,11 +2,7 @@
 
 #include <Arduino.h>
 #include <AceButton.h> //https://github.com/bxparks/AceButton
-#include <EEPROM.h>
-#define EEPROM_SIZE 10
-
 #include <_env.h>
-
 #include <wifi.h>
 #include <ui/screencoordinator.h>
 #include <button.h>
@@ -14,17 +10,21 @@
 #include <boards.h>
 #include <sleep.h>
 
-RTC_DATA_ATTR int pressCount = 0;
+RTC_DATA_ATTR volatile int pressCount = 0;
 
 long lastRefresh = 0;
-long refreshInterval = 500;
+long refreshInterval = 100; 
 
 ScreenCoordinator screenCoordinator = ScreenCoordinator();
 
-void displayMainScreen()
+void displayMainScreen(bool init)
 {
   float batteryLevel = checkBattery();
-  screenCoordinator.showMainScreen(batteryLevel, pressCount);
+  if(init) {
+    screenCoordinator.switchToMainScreen(batteryLevel, pressCount);
+  } else {
+    screenCoordinator.updateMainScreen(batteryLevel, pressCount);
+  }
 }
 
 void onButtonClicked()
@@ -43,10 +43,36 @@ void onButtonLongPressed()
 {
   Serial.println("Button long pressed");
   Serial.println("Going to sleep...");
-  screenCoordinator.showSleepScreen();
+  screenCoordinator.switchToSleepScreen();
   enterSleep();
 }
 
+void handleInputTask(void * parameter)
+{
+  Serial.print("Input task running on core: ");
+  Serial.println(xPortGetCoreID());
+  for (;;)
+  {
+    checkButton();
+    vTaskDelay(10 / portTICK_PERIOD_MS); // Slight delay to prevent task hogging the CPU
+  }
+}
+
+void handleUITask(void * parameter)
+{
+  Serial.print("UI task running on core: ");
+  Serial.println(xPortGetCoreID());
+  displayMainScreen(true);
+  for (;;)
+  {
+    if (millis() - lastRefresh > refreshInterval)
+    {
+      displayMainScreen(false);
+      lastRefresh = millis();
+    }
+    vTaskDelay(10 / portTICK_PERIOD_MS); // Slight delay to prevent task hogging the CPU
+  }
+}
 void setup()
 {
   Serial.begin(115200);
@@ -54,39 +80,38 @@ void setup()
   Serial.println("setup");
   pinMode(BATTERY_ADC_PIN, INPUT);
   analogReadResolution(12);
-  // connectToWifi();
+  
   setupButton(onButtonClicked, onButtonDoubleClicked, onButtonLongPressed);
   Serial.println("setup done");
 
-  // If not woken up by button press, show battery percentage
-  if (!wokenByButtonPress())
-  {
-    Serial.println("Not woken up by button press");
-  }
-  else
+  if (wokenByButtonPress())
   {
     Serial.println("Woken up by button press");
     // Manually call button handler, as event is not caught after deep sleep wakeup  - hacky
     onButtonClicked();
   }
-  displayMainScreen();
+
+  // Create tasks pinned to specific cores
+  xTaskCreatePinnedToCore(
+    handleInputTask,   // Task function
+    "InputTask",       // Name of the task (for debugging)
+    10000,             // Stack size (in bytes)
+    NULL,              // Task input parameter
+    1,                 // Priority of the task
+    NULL,              // Task handle
+    0                  // Core 0
+  );
+
+  xTaskCreatePinnedToCore(
+    handleUITask,      // Task function
+    "UITask",          // Name of the task (for debugging)
+    10000,             // Stack size (in bytes)
+    NULL,              // Task input parameter
+    1,                 // Priority of the task
+    NULL,              // Core 1
+    1                  // Core 1
+  );
 }
 
 void loop()
-{
-  checkButton();
-  if (millis() - lastRefresh > refreshInterval)
-  {
-    switch(screenCoordinator.screenType){
-    case MAIN:
-      displayMainScreen();
-      break;
-    case SLEEP:
-      screenCoordinator.showSleepScreen();
-      break;
-  }
-
-    lastRefresh = millis();
-  }
-  
-}
+{}
