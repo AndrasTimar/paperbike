@@ -9,23 +9,25 @@
 #include <battery.h>
 #include <boards.h>
 #include <sleep.h>
+#include <hall_sensor.h>
 
 RTC_DATA_ATTR volatile int pressCount = 0;
 RTC_DATA_ATTR volatile int magnetPassedCount = 0;
-int hallSensorPin = 21;  // Digital input pin
 
 long lastRefresh = 0;
-long refreshInterval = 100; 
+long refreshInterval = 3000; 
 
 ScreenCoordinator screenCoordinator = ScreenCoordinator();
+HallSensorSpeedService hallSensorSpeedService = HallSensorSpeedService();
 
 void displayMainScreen(bool init)
 {
   float batteryLevel = checkBattery();
+  float speed = hallSensorSpeedService.getSpeedInKmH(1);
   if(init) {
-    screenCoordinator.switchToMainScreen(batteryLevel, pressCount, magnetPassedCount);
+    screenCoordinator.switchToMainScreen(batteryLevel, pressCount, speed);
   } else {
-    screenCoordinator.updateMainScreen(batteryLevel, pressCount, magnetPassedCount);
+    screenCoordinator.updateMainScreen(batteryLevel, pressCount, speed);
   }
 }
 
@@ -61,15 +63,7 @@ void handleInputTask(void * parameter)
   bool magnetHight = false;
   for (;;)
   {
-    int sensorValue = digitalRead(hallSensorPin);
-    if (sensorValue == HIGH)
-    {
-      magnetHight = true;
-      
-    } else if (magnetHight) {
-      magnetHight = false;
-      onMagnetPassed();
-    }
+    hallSensorSpeedService.checkSensor();
     checkButton();
     vTaskDelay(10 / portTICK_PERIOD_MS); // Slight delay to prevent task hogging the CPU
   }
@@ -95,8 +89,8 @@ void setup()
   Serial.begin(115200);
   Serial.println();
   Serial.println("setup");
-  pinMode(hallSensorPin, INPUT);
   pinMode(BATTERY_ADC_PIN, INPUT);
+  hallSensorSpeedService.init();
   analogReadResolution(12);
   
   setupButton(onButtonClicked, onButtonDoubleClicked, onButtonLongPressed);

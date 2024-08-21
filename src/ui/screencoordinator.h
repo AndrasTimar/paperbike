@@ -38,14 +38,14 @@ public:
         display->fillScreen(GxEPD_WHITE);
         display->update();
     };
-    void switchToMainScreen(float batteryLevel, int pressCount, int magnetPassCount)
+    void switchToMainScreen(float batteryLevel, int pressCount, float magnetPassCount)
     {
         this->screenType = MAIN;
         display->fillScreen(GxEPD_WHITE);
         mainScreen->init(batteryLevel, pressCount, magnetPassCount);
     }
 
-    void updateMainScreen(float batteryLevel, int pressCount, int magnetPassCount)
+    void updateMainScreen(float batteryLevel, int pressCount, float magnetPassCount)
     {
         if (screenType == MAIN)
         {

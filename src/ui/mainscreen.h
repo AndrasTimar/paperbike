@@ -22,7 +22,7 @@ public:
         this->display = display;
     }
 
-    void init(float batteryLevel, int pressCount, int magnetPassCount)
+    void init(float batteryLevel, int pressCount, float magnetPassCount)
     {
         batteryText = new TextWidget(WidgetConfig(2, 10, 2, 2, SCREEN_WIDTH - 10, 20), "Battery: -%");
         counterText = new TextWidget(WidgetConfig(2, 40, 2, 2, SCREEN_WIDTH - 10, 20), "Presses: -");
@@ -30,13 +30,12 @@ public:
         update(batteryLevel, pressCount, magnetPassCount);
     }
 
-    void update(float batteryLevel, int pressCount, int magnetPassCount)
+    void update(float batteryLevel, int pressCount, float magnetPassCount)
     {
         int level = roundToNearestFive(batteryLevel);
         batteryText->setText(String("Battery: " + String(batteryLevel) + " %"));
-        Serial.println("Updating MainScreen batteryLevel level: " + String(level));
         counterText->setText(String("Presses " + String(pressCount)));
-        magnetText->setText(String("Magnet: " + String(magnetPassCount)));
+        magnetText->setText(String("Speed: " + String(magnetPassCount)) + " km/h");
 
         batteryText->render(*display, true);
         counterText->render(*display, true);
