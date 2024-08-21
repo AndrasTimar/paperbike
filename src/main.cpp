@@ -11,6 +11,8 @@
 #include <sleep.h>
 
 RTC_DATA_ATTR volatile int pressCount = 0;
+RTC_DATA_ATTR volatile int magnetPassedCount = 0;
+int hallSensorPin = 21;  // Digital input pin
 
 long lastRefresh = 0;
 long refreshInterval = 100; 
@@ -21,10 +23,15 @@ void displayMainScreen(bool init)
 {
   float batteryLevel = checkBattery();
   if(init) {
-    screenCoordinator.switchToMainScreen(batteryLevel, pressCount);
+    screenCoordinator.switchToMainScreen(batteryLevel, pressCount, magnetPassedCount);
   } else {
-    screenCoordinator.updateMainScreen(batteryLevel, pressCount);
+    screenCoordinator.updateMainScreen(batteryLevel, pressCount, magnetPassedCount);
   }
+}
+
+void onMagnetPassed() {
+  magnetPassedCount++;
+  Serial.println("Magnet passed");
 }
 
 void onButtonClicked()
@@ -51,8 +58,18 @@ void handleInputTask(void * parameter)
 {
   Serial.print("Input task running on core: ");
   Serial.println(xPortGetCoreID());
+  bool magnetHight = false;
   for (;;)
   {
+    int sensorValue = digitalRead(hallSensorPin);
+    if (sensorValue == HIGH)
+    {
+      magnetHight = true;
+      
+    } else if (magnetHight) {
+      magnetHight = false;
+      onMagnetPassed();
+    }
     checkButton();
     vTaskDelay(10 / portTICK_PERIOD_MS); // Slight delay to prevent task hogging the CPU
   }
@@ -78,6 +95,7 @@ void setup()
   Serial.begin(115200);
   Serial.println();
   Serial.println("setup");
+  pinMode(hallSensorPin, INPUT);
   pinMode(BATTERY_ADC_PIN, INPUT);
   analogReadResolution(12);
   

@@ -38,19 +38,19 @@ public:
         display->fillScreen(GxEPD_WHITE);
         display->update();
     };
-    void switchToMainScreen(float batteryLevel, int pressCount)
+    void switchToMainScreen(float batteryLevel, int pressCount, int magnetPassCount)
     {
         this->screenType = MAIN;
         display->fillScreen(GxEPD_WHITE);
-        mainScreen->init(batteryLevel, pressCount);
+        mainScreen->init(batteryLevel, pressCount, magnetPassCount);
     }
 
-    void updateMainScreen(float batteryLevel, int pressCount)
+    void updateMainScreen(float batteryLevel, int pressCount, int magnetPassCount)
     {
         if (screenType == MAIN)
         {
             display->fillScreen(GxEPD_WHITE);
-            mainScreen->update(batteryLevel, pressCount);
+            mainScreen->update(batteryLevel, pressCount, magnetPassCount);
         }
     }
     void switchToSleepScreen()

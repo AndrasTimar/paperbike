@@ -22,22 +22,25 @@ public:
         this->display = display;
     }
 
-    void init(float batteryLevel, int pressCount)
+    void init(float batteryLevel, int pressCount, int magnetPassCount)
     {
-        batteryText = new TextWidget(WidgetConfig(2, 10, 2, 2, SCREEN_WIDTH - 10, 40), "Battery: -%");
-        counterText = new TextWidget(WidgetConfig(2, 60, 2, 2, SCREEN_WIDTH - 10, 40), "Presses: -");
-        update(batteryLevel, pressCount);
+        batteryText = new TextWidget(WidgetConfig(2, 10, 2, 2, SCREEN_WIDTH - 10, 20), "Battery: -%");
+        counterText = new TextWidget(WidgetConfig(2, 40, 2, 2, SCREEN_WIDTH - 10, 20), "Presses: -");
+        magnetText = new TextWidget(WidgetConfig(2, 70, 2, 2, SCREEN_WIDTH - 10, 20), "Magnet: -");
+        update(batteryLevel, pressCount, magnetPassCount);
     }
 
-    void update(float batteryLevel, int pressCount)
+    void update(float batteryLevel, int pressCount, int magnetPassCount)
     {
         int level = roundToNearestFive(batteryLevel);
         batteryText->setText(String("Battery: " + String(batteryLevel) + " %"));
         Serial.println("Updating MainScreen batteryLevel level: " + String(level));
-        counterText->setText(String("Pressed button " + String(pressCount) + " times"));
+        counterText->setText(String("Presses " + String(pressCount)));
+        magnetText->setText(String("Magnet: " + String(magnetPassCount)));
 
         batteryText->render(*display, true);
         counterText->render(*display, true);
+        magnetText->render(*display, true);
     };
 
     int roundToNearestFive(float num)
@@ -49,4 +52,5 @@ private:
     GxEPD_Class *display;
     TextWidget *batteryText;
     TextWidget *counterText;
+    TextWidget *magnetText;
 };
