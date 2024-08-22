@@ -1,37 +1,35 @@
 #pragma once
-#include <ui/widgets/widgetconfig.h>
+#include <ui/widgets/positionconfig.h>
 #include <GxDEPG0213BN/GxDEPG0213BN.h>
 #include <vector>
 #include <memory>
 #include <string>
+#include <boards.h>
 
 class Widget {
 public:
-    Widget(const WidgetConfig config)
-        : config(config), dirty(true), canvas(config.width, config.height){}
+    Widget(const PositionConfig config)
+        : config(config), dirty(true), canvas(config.size.width, config.size.height){}
 
     virtual ~Widget() {}
 
-    void render(GxEPD_Class &display, bool update) {
+    void render(GxEPD_Class &display) {
         if(!dirty) {
             return;
         }
-        Serial.println("Rendering widget");
-        GFXcanvas1 canvas(config.width, config.height);
-        renderToCanvas(canvas);
+        GFXcanvas1 canvas(config.size.width, config.size.height);
+        renderToCanvas(canvas, config.paddingValues);
 
-        display.fillRect(config.x, config.y, config.width, config.height, GxEPD_WHITE);
-        display.drawBitmap(config.x, config.y, canvas.getBuffer(), config.width, config.height, GxEPD_BLACK);
-        if(showBorder) {
-            display.drawRect(config.x, config.y, config.width, config.height, GxEPD_BLACK);
+        display.fillRect(config.position.x, config.position.y, config.size.width, config.size.height, GxEPD_WHITE);
+        display.drawBitmap(config.position.x, config.position.y, canvas.getBuffer(), config.size.width, config.size.height, GxEPD_BLACK);
+        if(DEBUG_MODE) {
+            display.drawRect(config.position.x, config.position.y, config.size.width, config.size.height, GxEPD_BLACK);
         }
-        if (update) {
-          display.updateWindow(config.x, config.y, config.width, config.height, true);
-        }
+        display.updateWindow(config.position.x, config.position.y, config.size.width, config.size.height, true);
         dirty = false;
     }
 
-    virtual void renderToCanvas(GFXcanvas1 &canvas) const = 0; // Const method
+    virtual void renderToCanvas(GFXcanvas1 &canvas, PaddingValues paddingValues) const = 0;
 
     void markDirty() {
         dirty = true;
@@ -43,7 +41,7 @@ public:
    
 protected:
     bool dirty;
-    WidgetConfig config;
+    PositionConfig config;
     GFXcanvas1 canvas;
     bool showBorder = true;
 };

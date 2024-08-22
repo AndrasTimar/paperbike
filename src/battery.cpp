@@ -9,9 +9,8 @@ float checkBattery()
 {
     float voltage = analogRead(BATTERY_ADC_PIN) / 4096.0 * 7.46;
     uint8_t percentage = 0;
-    //Serial.println("Voltage = " + String(voltage));
     if(voltage > 4.2) {
-        return 100.0; // signal charging
+        return 100.0;
     }
     if (voltage > 1)
     { // Only display if there is a valid reading
@@ -20,7 +19,6 @@ float checkBattery()
             percentage = 100;
         if (voltage <= 3.50)
             percentage = 0;
-        //Serial.println("Percentage = " + String(percentage));
     }
     return percentage;
 }

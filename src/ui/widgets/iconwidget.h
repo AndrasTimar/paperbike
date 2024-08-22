@@ -5,15 +5,15 @@
 #include <memory>
 #include <Arduino.h>
 #include <ui/size.h>
+#include <ui/widgets/positionconfig.h>
 
 class IconWidget : public Widget {
 public:
-    IconWidget(const WidgetConfig config, const uint8_t* iconData, const Size iconSize)
+    IconWidget(const PositionConfig config, const uint8_t* iconData, const Size iconSize)
         : Widget(config), iconData(iconData), iconSize(iconSize) {}
 
-    void renderToCanvas(GFXcanvas1 &canvas) const override {
-        Serial.println("Rendering icon");
-        canvas.drawBitmap(config.paddingStart, config.paddingTop, iconData, iconSize.width, iconSize.height, 1);
+    void renderToCanvas(GFXcanvas1 &canvas, PaddingValues paddingValues) const override {
+        canvas.drawBitmap(paddingValues.paddingStart, paddingValues.paddingTop, iconData, iconSize.width, iconSize.height, 1);
     }
 
     void setIcon(const uint8_t* iconData) {

@@ -2,8 +2,9 @@
 #include <GxDEPG0213BN/GxDEPG0213BN.h>
 #include <map>
 #include <ui/widgets/textwidget.h>
-#include <ui/widgets/widgetconfig.h>
+#include <ui/widgets/positionconfig.h>
 #include <boards.h>
+#include <ui/size.h>
 
 class MainScreen
 {
@@ -13,33 +14,36 @@ public:
     ~MainScreen()
     {
         delete batteryText;
-        delete counterText;
+        delete speedText;
     };
     
     MainScreen(GxEPD_Class *display)
     {
-        Serial.println("Creating MainScreen");
         this->display = display;
     }
 
-    void init(float batteryLevel, int pressCount, float magnetPassCount)
+    void init()
     {
-        batteryText = new TextWidget(WidgetConfig(2, 10, 2, 2, SCREEN_WIDTH - 10, 20), "Battery: -%");
-        counterText = new TextWidget(WidgetConfig(2, 40, 2, 2, SCREEN_WIDTH - 10, 20), "Presses: -");
-        magnetText = new TextWidget(WidgetConfig(2, 70, 2, 2, SCREEN_WIDTH - 10, 20), "Magnet: -");
-        update(batteryLevel, pressCount, magnetPassCount);
+
+        batteryText = new TextWidget(PositionConfig(Position(2, 10), Size((SCREEN_WIDTH - 10) / 2, 20), PaddingValues(2, 2)), "-%", 2);
+        distanceText = new TextWidget(PositionConfig(Position((SCREEN_WIDTH - 10) / 2 + 40, 10), Size(SCREEN_WIDTH - 10 / 2, 20), PaddingValues(2, 2)), "Loading...", 2);
+        speedText = new TextWidget(PositionConfig(Position(2, 30), Size(SCREEN_WIDTH - 10, 70), PaddingValues(40, 20)), "Loading...", 3);
+
+        batteryText->render(*display);
+        speedText->render(*display);
+        distanceText->render(*display);
     }
 
-    void update(float batteryLevel, int pressCount, float magnetPassCount)
+    void update(float batteryLevel, double speedKmph, double totalDistance)
     {
         int level = roundToNearestFive(batteryLevel);
-        batteryText->setText(String("Battery: " + String(batteryLevel) + " %"));
-        counterText->setText(String("Presses " + String(pressCount)));
-        magnetText->setText(String("Speed: " + String(magnetPassCount)) + " km/h");
+        batteryText->setText(String(String(level) + " %"));
+        speedText->setText(String(speedKmph) + " km/h");
+        distanceText->setText(String(totalDistance / 1000) + " km");
 
-        batteryText->render(*display, true);
-        counterText->render(*display, true);
-        magnetText->render(*display, true);
+        batteryText->render(*display);
+        speedText->render(*display);
+        distanceText->render(*display);
     };
 
     int roundToNearestFive(float num)
@@ -50,6 +54,6 @@ public:
 private:
     GxEPD_Class *display;
     TextWidget *batteryText;
-    TextWidget *counterText;
-    TextWidget *magnetText;
+    TextWidget *speedText;
+    TextWidget *distanceText;
 };

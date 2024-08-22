@@ -5,7 +5,6 @@
 #include <GxDEPG0213BN/GxDEPG0213BN.h>
 #include <boards.h>
 #include <Arduino.h>
-#include <font_prazo_9.h>
 #include <ui/screencoordinator.h>
 #include <ui/mainscreen.h>
 #include <ui/sleepscreen.h>
@@ -38,19 +37,18 @@ public:
         display->fillScreen(GxEPD_WHITE);
         display->update();
     };
-    void switchToMainScreen(float batteryLevel, int pressCount, float magnetPassCount)
+    void switchToMainScreen()
     {
         this->screenType = MAIN;
         display->fillScreen(GxEPD_WHITE);
-        mainScreen->init(batteryLevel, pressCount, magnetPassCount);
+        mainScreen->init();
     }
 
-    void updateMainScreen(float batteryLevel, int pressCount, float magnetPassCount)
+    void updateMainScreen(float batteryLevel, double speedKmph, double totalDistance)
     {
         if (screenType == MAIN)
         {
-            display->fillScreen(GxEPD_WHITE);
-            mainScreen->update(batteryLevel, pressCount, magnetPassCount);
+            mainScreen->update(batteryLevel, speedKmph, totalDistance);
         }
     }
     void switchToSleepScreen()

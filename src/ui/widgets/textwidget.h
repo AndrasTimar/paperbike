@@ -1,5 +1,5 @@
 #pragma once
-#include <ui/widgets/widgetconfig.h>
+#include <ui/widgets/positionconfig.h>
 #include <ui/widgets/widget.h>
 #include <GxDEPG0213BN/GxDEPG0213BN.h>
 #include <vector>
@@ -9,31 +9,26 @@
 
 class TextWidget : public Widget {
 public:
-    TextWidget(const WidgetConfig config, const String text)
-        : Widget(config), text(text) {}
+    TextWidget(const PositionConfig config, const String text, const int textSize = 2)
+        : Widget(config), text(text), textSize(textSize) {}
 
     void setText(const String newText) {
-        // if text is the same return
         if (this->text == newText) {
             return;
         }
         
-        Serial.println("Setting text");
         this->text = newText;
         markDirty();
     }
 
-    void renderToCanvas(GFXcanvas1 &canvas) const override {
-        canvas.setTextSize(2);
+    void renderToCanvas(GFXcanvas1 &canvas, PaddingValues paddingValues) const override {
+        canvas.setTextSize(textSize);
         canvas.setTextColor(1);
-        //TODO get font from outside
-        // canvas.setFont(&FreeMonoBold9pt7b);
-        // display.setFont(&FreeMonoBold9pt7b);
-        //get the text bounds
-        canvas.setCursor(config.paddingStart, config.paddingTop);
+        canvas.setCursor(paddingValues.paddingStart, paddingValues.paddingTop);
         canvas.print(text);
     }
 
 private:
     String text;
+    const int textSize;
 };

@@ -31,6 +31,11 @@
 #define SCREEN_HEIGHT           (120)
 #define UNUSABLE_TOP_HEIGHT     (8)
 
+#define GPS_RX_PIN              (15)
+#define GPS_TX_PIN              (14)
+
+#define DEBUG_MODE              false
+
 #define _HAS_ADC_DETECTED_
 #define _HAS_LED_
 #define _HAS_SDCARD_

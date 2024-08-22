@@ -12,6 +12,7 @@
 #include <ui/sleepscreen.h>
 #include <boards.h>
 #include <ui/widgets/iconwidget.h>
+#include <ui/size.h>
 
 class SleepScreen
 {
@@ -21,12 +22,12 @@ public:
         int height = SCREEN_HEIGHT;
         int paddingStartForCenter = ((width - sleepIconSize.width) / 2);
         int paddingTopForCenter = ((height - sleepIconSize.height) / 2);
-        iconWidget = new IconWidget(WidgetConfig(0, 0, paddingStartForCenter, paddingTopForCenter, width, height), sleepIconData, sleepIconSize);
+        iconWidget = new IconWidget(PositionConfig(Position(0, 0), Size(width, height), PaddingValues(paddingStartForCenter, paddingTopForCenter)), sleepIconData, sleepIconSize);
     };
     void init()
     {
         display->fillScreen(GxEPD_WHITE);
-        iconWidget->render(*display, false);
+        iconWidget->render(*display);
         display->update();
     }
 

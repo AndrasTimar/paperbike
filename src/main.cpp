@@ -1,129 +1,102 @@
-#define LILYGO_T5_V213
-
-#include <Arduino.h>
-#include <AceButton.h> //https://github.com/bxparks/AceButton
-#include <_env.h>
-#include <wifi.h>
+#include <TinyGPS++.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include <boards.h>
 #include <ui/screencoordinator.h>
 #include <button.h>
 #include <battery.h>
-#include <boards.h>
-#include <sleep.h>
-#include <hall_sensor.h>
-
-RTC_DATA_ATTR volatile int pressCount = 0;
-RTC_DATA_ATTR volatile int magnetPassedCount = 0;
-
-long lastRefresh = 0;
-long refreshInterval = 3000; 
 
 ScreenCoordinator screenCoordinator = ScreenCoordinator();
-HallSensorSpeedService hallSensorSpeedService = HallSensorSpeedService();
+TinyGPSPlus gps;
+TaskHandle_t DisplayTaskHandle = NULL;
+const int GPS_READ_INTERVAL = 3000; // 5 seconds
+unsigned long lastGPSRead = 0;
+volatile double speed = 0.0;
+volatile bool displayUpdating = false;
 
-void displayMainScreen(bool init)
+const int SCREEN_REFRESH_INTERVAL = 5000;
+volatile unsigned long lastScreenUpdate = 0;
+bool shouldUpdateScreen = true;
+float previousLat = -1;
+float previousLon = -1;
+volatile float totalDistance = 0;
+
+void onButtonClicked();
+void onButtonDoubleClicked();
+void onButtonLongPressed();
+void updateDisplayTask(void *parameter);
+void enterSleep();
+
+void setup()
 {
-  float batteryLevel = checkBattery();
-  float speed = hallSensorSpeedService.getSpeedInKmH(1);
-  if(init) {
-    screenCoordinator.switchToMainScreen(batteryLevel, pressCount, speed);
-  } else {
-    screenCoordinator.updateMainScreen(batteryLevel, pressCount, speed);
-  }
+  Serial.begin(115200);
+  Serial1.begin(9600, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
+  setupButton(onButtonClicked, onButtonDoubleClicked, onButtonLongPressed);
+  screenCoordinator.switchToMainScreen();
+
+  xTaskCreatePinnedToCore(
+      updateDisplayTask, // Task function
+      "DisplayUpdate",   // Name of the task
+      10000,             // Stack size (in bytes)
+      NULL,              // Task input parameter
+      1,                 // Priority of the task
+      &DisplayTaskHandle,// Task handle
+      0                  // Core where the task should run (Core 0)
+  );
 }
 
-void onMagnetPassed() {
-  magnetPassedCount++;
-  Serial.println("Magnet passed");
+void loop()
+{
+  if (millis() - lastGPSRead >= GPS_READ_INTERVAL)
+  {
+    lastGPSRead = millis();
+    if (Serial1.available())
+    {
+      gps.encode(Serial1.read());
+    }
+    if(gps.location.isUpdated()) {
+      if(previousLat != -1 && previousLon != -1) {
+        totalDistance += gps.distanceBetween(previousLat, previousLon, gps.location.lat(), gps.location.lng());
+      }
+      previousLat = gps.location.lat();
+      previousLon = gps.location.lng();
+    }
+    if (gps.speed.isUpdated())
+    {
+      speed = gps.speed.kmph();                                     // Get the speed from the GPS module
+    }
+  }
+ if (millis() - lastScreenUpdate >= SCREEN_REFRESH_INTERVAL)
+  {
+    lastScreenUpdate = millis();
+    xTaskNotifyGive(DisplayTaskHandle);
+  }
+  checkButton();
+}
+
+void updateDisplayTask(void *parameter)
+{
+  for (;;)
+  {
+    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+    displayUpdating = true;
+    screenCoordinator.updateMainScreen(checkBattery(), speed, totalDistance);
+    displayUpdating = false;
+  }
 }
 
 void onButtonClicked()
 {
-  pressCount++;
   Serial.println("Button clicked");
 }
 
 void onButtonDoubleClicked()
 {
-  pressCount = 0;
-  Serial.println("Button double clicked");
+  totalDistance = 0;
+  xTaskNotifyGive(DisplayTaskHandle);
 }
 
 void onButtonLongPressed()
 {
   Serial.println("Button long pressed");
-  Serial.println("Going to sleep...");
-  screenCoordinator.switchToSleepScreen();
-  enterSleep();
 }
-
-void handleInputTask(void * parameter)
-{
-  Serial.print("Input task running on core: ");
-  Serial.println(xPortGetCoreID());
-  bool magnetHight = false;
-  for (;;)
-  {
-    hallSensorSpeedService.checkSensor();
-    checkButton();
-    vTaskDelay(10 / portTICK_PERIOD_MS); // Slight delay to prevent task hogging the CPU
-  }
-}
-
-void handleUITask(void * parameter)
-{
-  Serial.print("UI task running on core: ");
-  Serial.println(xPortGetCoreID());
-  displayMainScreen(true);
-  for (;;)
-  {
-    if (millis() - lastRefresh > refreshInterval)
-    {
-      displayMainScreen(false);
-      lastRefresh = millis();
-    }
-    vTaskDelay(10 / portTICK_PERIOD_MS); // Slight delay to prevent task hogging the CPU
-  }
-}
-void setup()
-{
-  Serial.begin(115200);
-  Serial.println();
-  Serial.println("setup");
-  pinMode(BATTERY_ADC_PIN, INPUT);
-  hallSensorSpeedService.init();
-  analogReadResolution(12);
-  
-  setupButton(onButtonClicked, onButtonDoubleClicked, onButtonLongPressed);
-  Serial.println("setup done");
-
-  if (wokenByButtonPress())
-  {
-    Serial.println("Woken up by button press");
-    // Manually call button handler, as event is not caught after deep sleep wakeup  - hacky
-    onButtonClicked();
-  }
-
-  // Create tasks pinned to specific cores
-  xTaskCreatePinnedToCore(
-    handleInputTask,   // Task function
-    "InputTask",       // Name of the task (for debugging)
-    10000,             // Stack size (in bytes)
-    NULL,              // Task input parameter
-    1,                 // Priority of the task
-    NULL,              // Task handle
-    0                  // Core 0
-  );
-
-  xTaskCreatePinnedToCore(
-    handleUITask,      // Task function
-    "UITask",          // Name of the task (for debugging)
-    10000,             // Stack size (in bytes)
-    NULL,              // Task input parameter
-    1,                 // Priority of the task
-    NULL,              // Core 1
-    1                  // Core 1
-  );
-}
-
-void loop()
-{}
