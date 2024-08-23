@@ -52,12 +52,16 @@ public:
 
         int level = roundToNearestFive(batteryLevel);
         batteryText->setText(String(String(level) + " %"));
-        speedText->setText(String(speedKmph, 1) + " km/h");
+        if(speedKmph > 1) {
+            speedText->setText(String(speedKmph, 1) + " km/h");
+        } else {
+            speedText->setText("0.0 km/h");
+        }
         distanceText->setText(String(totalDistance / 1000, 2) + " km");
         if(averageSpeed > 2) {
             averageSpeedText->setText(String(averageSpeed, 1) + " km/h");
         } else {
-            averageSpeedText->setText("<2 km/h");
+            averageSpeedText->setText("0.0 km/h");
         }
         
         //set legtime text formatted to HH:mm:ss with padding

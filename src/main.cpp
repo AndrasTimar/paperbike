@@ -120,11 +120,10 @@ double calculateAverageSpeedKmph()
 
   if (totalDistanceMeters > 0 && currentTime > distanceResetTime)
   {
-    unsigned long timeElapsed = currentTime - distanceResetTime; // Time elapsed in milliseconds
-    // Ensure timeElapsedHours is not too small to avoid unrealistic speed values
+    unsigned long timeElapsed = currentTime - distanceResetTime;
     if (timeElapsed > 3000 && totalDistanceMeters > 0)
     {
-      averageSpeed = (totalDistanceMeters / timeElapsed) * 3600; // Convert meters per millisecond to kilometers per hour
+      averageSpeed = (totalDistanceMeters / timeElapsed) * 3600;
     }
   }
 
