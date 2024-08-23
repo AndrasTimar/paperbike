@@ -44,11 +44,11 @@ public:
         mainScreen->init();
     }
 
-    void updateMainScreen(float batteryLevel, double speedKmph, double totalDistance)
+    void updateMainScreen(float batteryLevel, double speedKmph, double totalDistance, double averageSpeed, double legTimeMs)
     {
         if (screenType == MAIN)
         {
-            mainScreen->update(batteryLevel, speedKmph, totalDistance);
+            mainScreen->update(batteryLevel, speedKmph, totalDistance, averageSpeed, legTimeMs);
         }
     }
     void switchToSleepScreen()

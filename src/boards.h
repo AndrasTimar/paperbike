@@ -31,8 +31,8 @@
 #define SCREEN_HEIGHT           (120)
 #define UNUSABLE_TOP_HEIGHT     (8)
 
-#define GPS_RX_PIN              (15)
-#define GPS_TX_PIN              (14)
+#define GPS_RX_PIN              (14)
+#define GPS_TX_PIN              (15)
 
 #define DEBUG_MODE              false
 

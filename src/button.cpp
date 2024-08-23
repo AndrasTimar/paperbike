@@ -45,7 +45,6 @@ void setupButton(ButtonCallback singlePress, ButtonCallback doublePress, ButtonC
     buttonConfig->setEventHandler(handleEvent);
     pinMode(BUTTON_1, INPUT_PULLUP);
     button1.init(BUTTON_1);
-    Serial.println("setupButton");
 }
 
 void checkButton()
