@@ -6,11 +6,14 @@
 #include <button.h>
 #include <battery.h>
 
-ScreenCoordinator screenCoordinator = ScreenCoordinator();
+ScreenCoordinator screenCoordinator;
 TinyGPSPlus gps;
 TaskHandle_t DisplayTaskHandle = NULL;
 const int GPS_READ_INTERVAL = 5000;
 const double GPS_MIN_METERS = 2.5;
+const int SPEED_COUNT_TO_DROP = 1;
+
+
 unsigned long lastGPSRead = 0;
 volatile double speed = 0.0;
 volatile bool displayUpdating = false;
@@ -21,6 +24,12 @@ bool shouldUpdateScreen = true;
 volatile float previousLat = -1;
 volatile float previousLon = -1;
 volatile float totalDistanceMeters = 0;
+
+volatile float debugTotalDistanceWithoutFiltering = 0.0;
+volatile int debugDistanceCountWithoutFiltering = 0;
+volatile int debugActualSpeedCount = 0;
+
+int speedCount = 0;
 
 volatile float distanceResetTime = 0;
 
@@ -60,21 +69,37 @@ void loop()
     }
     if (gps.location.isUpdated())
     {
-      if (previousLat != -1 && previousLon != -1)
+      if (previousLat == -1 || previousLon == -1)
       {
+        debugDistanceCountWithoutFiltering++;
+        debugActualSpeedCount++;
+        previousLat = gps.location.lat();
+        previousLon = gps.location.lng();
+      } else {
         float distance = gps.distanceBetween(previousLat, previousLon, gps.location.lat(), gps.location.lng());
         if (distance > GPS_MIN_METERS)
         {
           totalDistanceMeters += distance;
-          
+          debugActualSpeedCount++;
+
+          previousLat = gps.location.lat();
+          previousLon = gps.location.lng();
         }
+        #if DEBUG_MODE
+        Serial.println("Distance: " + String(distance));
+        debugDistanceCountWithoutFiltering++;
+        debugTotalDistanceWithoutFiltering += distance;
+        #endif
       }
-      previousLat = gps.location.lat();
-      previousLon = gps.location.lng();
+
     }
     if (gps.speed.isUpdated())
     {
-      speed = gps.speed.kmph(); // Get the speed from the GPS module
+      if(speedCount < SPEED_COUNT_TO_DROP) {
+        speedCount++;
+      } else {
+        speed = gps.speed.kmph(); // Get the speed from the GPS module
+      }
     }
   }
   if (millis() - lastScreenUpdate >= SCREEN_REFRESH_INTERVAL)
@@ -92,25 +117,37 @@ void updateDisplayTask(void *parameter)
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
     displayUpdating = true;
     screenCoordinator.updateMainScreen(checkBattery(), speed, totalDistanceMeters, calculateAverageSpeedKmph(), millis() - distanceResetTime);
+    #if DEBUG_MODE
+    screenCoordinator.updateDebugScreen(debugTotalDistanceWithoutFiltering, debugDistanceCountWithoutFiltering, debugActualSpeedCount);
+    #endif
     displayUpdating = false;
   }
 }
 
 void onButtonClicked()
 {
-  Serial.println("Button clicked");
+
 }
 
 void onButtonDoubleClicked()
 {
   totalDistanceMeters = 0;
   distanceResetTime = millis();
+  debugActualSpeedCount = 1;
+  debugDistanceCountWithoutFiltering = 1;
+  debugTotalDistanceWithoutFiltering = 0;
   xTaskNotifyGive(DisplayTaskHandle);
 }
 
 void onButtonLongPressed()
 {
-  Serial.println("Button long pressed");
+  #if DEBUG_MODE
+  if(screenCoordinator.screenType != DEBUG) {
+    screenCoordinator.switchToDebugScreen();
+  } else {
+    screenCoordinator.switchToMainScreen();
+  }
+  #endif
 }
 
 double calculateAverageSpeedKmph()

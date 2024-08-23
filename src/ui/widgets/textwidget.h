@@ -32,3 +32,45 @@ private:
     String text;
     const int textSize;
 };
+
+
+class TextWidgetBuilder {
+private:
+    Position position;
+    Size size;
+    PaddingValues padding;
+    String text;
+    int textSize;
+
+public:
+    TextWidgetBuilder():  position(0, 0), size(SCREEN_WIDTH, 30), padding(2, 2), text(""), textSize(2)  {}
+
+    TextWidgetBuilder& setPosition(int x, int y) {
+        position = Position(x, y);
+        return *this;
+    }
+
+    TextWidgetBuilder& setSize(int width, int height) {
+        size = Size(width, height);
+        return *this;
+    }
+
+    TextWidgetBuilder& setPadding(int left, int top) {
+        padding = PaddingValues(left, top);
+        return *this;
+    }
+
+    TextWidgetBuilder& setText(const String newText) {
+        text = newText;
+        return *this;
+    }
+
+    TextWidgetBuilder& setTextSize(int newSize) {
+        textSize = newSize;
+        return *this;
+    }
+
+    TextWidget* build() const {
+        return new TextWidget(PositionConfig(position, size, padding), text, textSize);
+    }
+};

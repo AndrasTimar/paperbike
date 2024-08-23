@@ -34,7 +34,7 @@
 #define GPS_RX_PIN              (14)
 #define GPS_TX_PIN              (15)
 
-#define DEBUG_MODE              false
+#define DEBUG_MODE              true
 
 #define _HAS_ADC_DETECTED_
 #define _HAS_LED_
